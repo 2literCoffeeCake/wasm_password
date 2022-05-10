@@ -1,14 +1,22 @@
 //https://dev.to/dandyvica/wasm-in-rust-without-nodejs-2e0c
 
-use rand::seq::SliceRandom;
-use rand::thread_rng;
-use rand::Rng;
+mod password_builder;
+
+use password_builder::generate_random_password;
+use password_builder::PasswordOptions;
+
 extern crate wasm_bindgen;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
-const LETTERS: &str = "abcdefghijklmnopqrstuvwxyz";
-const NUMBERS: &str = "0123456789";
-const SPECIALCHARS: &str = "!§$%&/()=?{[]}+*~#-_,;.:<>|";
+#[wasm_bindgen]
+extern "C" {
+    fn alert(s: &str);
+
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+
+}
 
 #[wasm_bindgen]
 #[allow(improper_ctypes_definitions)]
@@ -17,128 +25,53 @@ pub extern "C" fn generate_password(options: u8, lenght: usize) -> String {
     generate_random_password(&options)
 }
 
-fn generate_random_password(options: &PasswordOptions) -> String {
-    let mut result: Vec<char> = Vec::new();
-    if options.is_empty() {
-        return result.iter().collect();
-    }
+#[wasm_bindgen]
+pub fn show_new_password() -> Result<(), JsValue> {
+    let window = web_sys::window().expect("no global `window` exists");
+    let document = window.document().expect("should have a document on window");
 
-    let mut chars = String::new();
+    let lenght = document
+        .get_element_by_id("nb_lenght")
+        .unwrap()
+        .dyn_into::<web_sys::HtmlInputElement>()
+        .unwrap()
+        .value()
+        .parse::<usize>()
+        .unwrap();
+    
 
-    let mut char: char;
-    let mut index;
 
-    if options.upper_case {
-        index = rand::thread_rng().gen_range(0..(LETTERS.len() - 1));
-        char = LETTERS.to_uppercase().chars().nth(index).unwrap();
-        chars.push_str(&LETTERS.to_uppercase());
-        result.push(char);
-    }
+    let options = get_options(&document);
+    let password = generate_password(options, lenght);
+    alert(&password);
 
-    if options.lower_case {
-        index = rand::thread_rng().gen_range(0..(LETTERS.len() - 1));
-        char = LETTERS.chars().nth(index).unwrap();
-        chars.push_str(LETTERS);
-        result.push(char);
-    }
-
-    if options.numeric {
-        index = rand::thread_rng().gen_range(0..(NUMBERS.len() - 1));
-        char = NUMBERS.chars().nth(index).unwrap();
-        chars.push_str(NUMBERS);
-        result.push(char);
-    }
-
-    if options.special {
-        index = rand::thread_rng().gen_range(0..(SPECIALCHARS.len() - 1));
-        char = SPECIALCHARS.chars().nth(index).unwrap();
-        chars.push_str(SPECIALCHARS);
-        result.push(char);
-    }
-
-    loop {
-        if result.len() >= options.lenght {
-            break;
-        }
-
-        index = rand::thread_rng().gen_range(0..(chars.len() - 1));
-        char = chars.chars().nth(index).unwrap();
-        result.push(char);
-    }
-    result.shuffle(&mut thread_rng());
-    result.iter().collect()
-}
-struct PasswordOptions {
-    upper_case: bool,
-    lower_case: bool,
-    numeric: bool,
-    special: bool,
-    lenght: usize,
+    Ok(())
 }
 
-impl PasswordOptions {
-    fn new(options: u8, mut lenght: usize) -> Self {
-        let options = u8_to_array(options);
-        if lenght < 4 {
-            lenght = 4;
-        }
-        Self {
-            lenght,
-            upper_case: options[0],
-            lower_case: options[1],
-            numeric: options[2],
-            special: options[3],
-        }
-    }
-
-    fn is_empty(&self) -> bool {
-        !self.upper_case && !self.lower_case && !self.numeric && !self.special
-    }
-}
-
-fn u8_to_array(mut value: u8) -> [bool; 4] {
-    let mut result: [bool; 4] = [false; 4];
-    let mut index = 0;
-    if value > 15 {
-        value = 15;
-    }
-    loop {
-        if value == 0 {
-            break;
-        }
-        if (value % 2) == 1 {
-            result[index] = true;
-        }
-        index += 1;
-        value /= 2;
-    }
-    result.reverse();
+fn get_options(document: &web_sys::Document) -> u8 {
+    let mut result = get_check_box_value(document, "cb_upper");
+    result += get_check_box_value(document, "cb_lower");
+    result += get_check_box_value(document, "cb_numeric");
+    result += get_check_box_value(document, "cb_special");
     result
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+fn get_check_box_value(document: &web_sys::Document, id: &str) -> u8 {
+    let check_box = document
+        .get_element_by_id(id)
+        .unwrap()
+        .dyn_into::<web_sys::HtmlInputElement>()
+        .unwrap();
+    if check_box.checked() {
 
-    macro_rules! try_parse_u8 {
-        ($($name:ident: $value:expr,)*) => {
-        $(
-            #[test]
-            fn $name() {
-                let (input, expected) = $value;
-                let arr = u8_to_array(input);
-                assert_eq!(arr, expected);
+        let value = check_box.get_attribute("data-value").and_then(|s| {
+            match s.parse::<u8>(){
+                Ok(val) => Some(val),
+                Err(_) => None,
             }
-        )*
-        }
-    }
-
-    try_parse_u8! {
-        parse_0_to_array: (0, [false, false, false, false]),
-        parse_6_to_array: (6, [false, true, true, false]),
-        parse_9_to_array: (9, [true, false, false, true]),
-        parse_11_to_array: (11, [true, false, true, true]),
-        parse_15_to_array: (15, [true, true, true, true]),
-        parse_20_to_array: (20, [true, true, true, true]),
+        });
+        value.unwrap_or_default()
+    } else {
+        0
     }
 }
