@@ -1,4 +1,4 @@
-import { generate_password, show_new_password, default as init } from './wasm_password.js';
+import { default as init } from './wasm_password.js';
   
 async function load_wasm() {
     try{
@@ -29,7 +29,7 @@ function init_components(){
     }
     const button = document.getElementsByTagName('button')[0];
     button.disabled = false;
-    button.onclick = show_new_password;
+    //button.onclick = show_new_password;
     document.getElementById('nb_lenght').addEventListener('change', on_value_change);
 }
 
