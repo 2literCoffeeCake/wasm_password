@@ -1,11 +1,14 @@
 //https://dev.to/dandyvica/wasm-in-rust-without-nodejs-2e0c
 
 mod password_builder;
+mod util;
 
 use password_builder::generate_random_password;
 use password_builder::PasswordOptions;
 
 extern crate wasm_bindgen;
+use util::get_lenght;
+use util::get_options;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -33,7 +36,12 @@ fn get_document() -> web_sys::Document {
 
 #[wasm_bindgen(start)]
 pub fn main() -> Result<(), JsValue> {
+    init_button()?;
+    init_numeric_text_box()?;
+    Ok(())
+}
 
+fn init_button() -> Result<(), JsValue> {
     let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
         let document = get_document();
         let lenght = get_lenght(&document);
@@ -55,41 +63,35 @@ pub fn main() -> Result<(), JsValue> {
     Ok(())
 }
 
-fn get_lenght(document: &web_sys::Document) -> usize {
-    let lenght = document
+fn init_numeric_text_box() -> Result<(), JsValue> {
+    let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+        let element = event
+            .target()
+            .unwrap()
+            .dyn_into::<web_sys::HtmlInputElement>()
+            .unwrap();
+
+        let raw_value = element.value();
+        let mut value = raw_value.parse::<u32>().unwrap_or_else(|_|{
+            match raw_value.parse::<f64>(){
+                Ok(val) => {
+                    val.floor() as u32
+                },
+                Err(_) => 4,
+            }
+        });
+        if value < 4{
+            value = 4;
+        }
+        element.set_value_as_number(value as f64);
+    }) as Box<dyn FnMut(_)>);
+
+    let input = get_document()
         .get_element_by_id("nb_lenght")
         .unwrap()
         .dyn_into::<web_sys::HtmlInputElement>()
-        .unwrap()
-        .value()
-        .parse::<usize>()
         .unwrap();
-    lenght
-}
-
-fn get_options(document: &web_sys::Document) -> u8 {
-    let mut result = get_check_box_value(document, "cb_upper");
-    result += get_check_box_value(document, "cb_lower");
-    result += get_check_box_value(document, "cb_numeric");
-    result += get_check_box_value(document, "cb_special");
-    result
-}
-
-fn get_check_box_value(document: &web_sys::Document, id: &str) -> u8 {
-    let check_box = document
-        .get_element_by_id(id)
-        .unwrap()
-        .dyn_into::<web_sys::HtmlInputElement>()
-        .unwrap();
-    if check_box.checked() {
-        let value = check_box
-            .get_attribute("data-value")
-            .and_then(|s| match s.parse::<u8>() {
-                Ok(val) => Some(val),
-                Err(_) => None,
-            });
-        value.unwrap_or_default()
-    } else {
-        0
-    }
+    input.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref())?;
+    closure.forget();
+    Ok(())
 }
