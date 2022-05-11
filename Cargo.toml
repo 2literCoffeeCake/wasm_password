@@ -21,7 +21,9 @@ features = [
   'Window',
   'HtmlInputElement',
   'HtmlButtonElement',
-  'MouseEvent'
+  'HtmlElement',
+  'MouseEvent',
+  'NodeList'
 ]
 
 [lib]

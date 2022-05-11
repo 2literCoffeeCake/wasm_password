@@ -8,7 +8,7 @@ extern crate wasm_bindgen;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-use web_sys::{HtmlButtonElement, HtmlInputElement, MouseEvent};
+use web_sys::{HtmlButtonElement, HtmlElement, HtmlInputElement, MouseEvent};
 
 #[wasm_bindgen]
 extern "C" {
@@ -29,6 +29,30 @@ pub extern "C" fn generate_password(options: u8, lenght: usize) -> String {
 pub fn main() -> Result<(), JsValue> {
     init_button()?;
     init_numeric_text_box()?;
+    Ok(())
+}
+
+#[wasm_bindgen]
+pub fn enable_components() -> Result<(), JsValue> {
+    let nodes = get_document().query_selector_all("[data-ui-element=\"true\"]")?;
+    let mut index = 0;
+    loop {
+        if index >= nodes.length() {
+            break;
+        }
+        if let Some(node) = nodes.get(index) {
+            let element = node.dyn_into::<HtmlElement>()?;
+            let id = element.id();
+            if &id == "button" {
+                let element = element.dyn_into::<HtmlButtonElement>()?;
+                element.set_disabled(false);
+            } else {
+                let element = element.dyn_into::<HtmlInputElement>()?;
+                element.set_disabled(false);
+            }
+        };
+        index += 1;
+    }
     Ok(())
 }
 
