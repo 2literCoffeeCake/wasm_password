@@ -1,16 +1,14 @@
 mod password_builder;
-mod util;
+use password_builder::{generate_random_password, PasswordOptions};
 
-use password_builder::generate_random_password;
-use password_builder::PasswordOptions;
+mod util;
+use util::{get_document, get_lenght, get_options};
 
 extern crate wasm_bindgen;
-use util::get_lenght;
-use util::get_options;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-use web_sys::{window, Document, HtmlButtonElement, HtmlInputElement, MouseEvent};
+use web_sys::{HtmlButtonElement, HtmlInputElement, MouseEvent};
 
 #[wasm_bindgen]
 extern "C" {
@@ -25,12 +23,6 @@ extern "C" {
 pub extern "C" fn generate_password(options: u8, lenght: usize) -> String {
     let options = PasswordOptions::new(options, lenght);
     generate_random_password(&options)
-}
-
-fn get_document() -> Document {
-    let window = window().expect("no global `window` exists");
-    let document = window.document().expect("should have a document on window");
-    document
 }
 
 #[wasm_bindgen(start)]

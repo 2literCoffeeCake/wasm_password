@@ -1,6 +1,12 @@
 extern crate wasm_bindgen;
 use wasm_bindgen::JsCast;
-use web_sys::{Document, HtmlInputElement};
+use web_sys::{window, Document, HtmlInputElement};
+
+pub fn get_document() -> Document {
+    let window = window().expect("no global `window` exists");
+    let document = window.document().expect("should have a document on window");
+    document
+}
 
 pub fn get_lenght(document: &Document) -> usize {
     let lenght = document
