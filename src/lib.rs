@@ -2,6 +2,7 @@ mod password_builder;
 use password_builder::{generate_random_password, PasswordOptions};
 
 mod util;
+use util::{get_check_box_ids, get_item_from_client_storage, set_item_to_client_storage};
 use util::{get_document, get_lenght, get_options};
 
 extern crate wasm_bindgen;
@@ -29,6 +30,7 @@ pub extern "C" fn generate_password(options: u8, lenght: usize) -> String {
 pub fn main() -> Result<(), JsValue> {
     init_button()?;
     init_numeric_text_box()?;
+    init_check_boxes()?;
     Ok(())
 }
 
@@ -79,6 +81,7 @@ fn init_button() -> Result<(), JsValue> {
 }
 
 fn init_numeric_text_box() -> Result<(), JsValue> {
+    let id = "nb_lenght";
     let closure = Closure::wrap(Box::new(move |event: MouseEvent| {
         let element = event
             .target()
@@ -92,14 +95,52 @@ fn init_numeric_text_box() -> Result<(), JsValue> {
             value = 4.0;
         }
         element.set_value_as_number(value);
+        set_item_to_client_storage(&format!("{}_value", id), &element.value());
     }) as Box<dyn FnMut(_)>);
 
     let input = get_document()
-        .get_element_by_id("nb_lenght")
+        .get_element_by_id(id)
         .unwrap()
         .dyn_into::<HtmlInputElement>()
         .unwrap();
     input.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref())?;
+    closure.forget();
+    let value = get_item_from_client_storage(&format!("{}_value", &id))
+        .unwrap_or("8".to_owned())
+        .parse::<f64>()
+        .unwrap_or(8.0);
+        input.set_value_as_number(value);
+    Ok(())
+}
+
+fn init_check_boxes() -> Result<(), JsValue> {
+    let closure = Closure::wrap(Box::new(move |event: MouseEvent| {
+        let element = event
+            .target()
+            .unwrap()
+            .dyn_into::<HtmlInputElement>()
+            .unwrap();
+        let mut value = "0";
+        if element.checked() {
+            value = "1";
+        }
+        set_item_to_client_storage(&format!("{}_value", element.id()), value);
+    }) as Box<dyn FnMut(_)>);
+    for id in get_check_box_ids() {
+        let input = get_document()
+            .get_element_by_id(&id)
+            .unwrap()
+            .dyn_into::<HtmlInputElement>()
+            .unwrap();
+        input.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref())?;
+        let value =
+            get_item_from_client_storage(&format!("{}_value", &id)).unwrap_or("1".to_owned());
+        let value = match value.as_str() {
+            "1" => true,
+            _ => false,
+        };
+        input.set_checked(value);
+    }
     closure.forget();
     Ok(())
 }
