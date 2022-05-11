@@ -1,12 +1,22 @@
-body, html{
+body,
+html {
     height: 100%;
     width: 100%;
     margin: 0;
     padding: 0;
 }
 
-.layout{
+.layout {
     display: grid;
     grid-template-columns: 10px 150px 150px;
     grid-template-rows: 10px 50px repeat(6, 30px) 1fr;
+}
+
+.layout>div {
+    display: flex;
+    align-items: center;
+}
+
+.layout div:nth-child(2n+1){
+    justify-content: center;
 }

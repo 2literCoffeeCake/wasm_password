@@ -1,11 +1,12 @@
 extern crate wasm_bindgen;
 use wasm_bindgen::JsCast;
+use web_sys::{Document, HtmlInputElement};
 
-pub fn get_lenght(document: &web_sys::Document) -> usize {
+pub fn get_lenght(document: &Document) -> usize {
     let lenght = document
         .get_element_by_id("nb_lenght")
         .unwrap()
-        .dyn_into::<web_sys::HtmlInputElement>()
+        .dyn_into::<HtmlInputElement>()
         .unwrap()
         .value()
         .parse::<usize>()
@@ -13,7 +14,7 @@ pub fn get_lenght(document: &web_sys::Document) -> usize {
     lenght
 }
 
-pub fn get_options(document: &web_sys::Document) -> u8 {
+pub fn get_options(document: &Document) -> u8 {
     let mut result = get_check_box_value(document, "cb_upper");
     result += get_check_box_value(document, "cb_lower");
     result += get_check_box_value(document, "cb_numeric");
@@ -21,11 +22,11 @@ pub fn get_options(document: &web_sys::Document) -> u8 {
     result
 }
 
-fn get_check_box_value(document: &web_sys::Document, id: &str) -> u8 {
+fn get_check_box_value(document: &Document, id: &str) -> u8 {
     let check_box = document
         .get_element_by_id(id)
         .unwrap()
-        .dyn_into::<web_sys::HtmlInputElement>()
+        .dyn_into::<HtmlInputElement>()
         .unwrap();
     if check_box.checked() {
         let value = check_box

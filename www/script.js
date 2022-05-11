@@ -11,12 +11,10 @@ async function load_wasm() {
 }
 
 function enable_components(){
-    const inputs = document.getElementsByTagName('input');
-    for(let i = 0; i < inputs.length; i++){
-        inputs[i].disabled = false;
+    const elements = document.querySelectorAll('[data-ui-element="true"]');
+    for(let i = 0; i < elements.length; i++){
+        elements[i].disabled = false;
     }
-    const button = document.getElementsByTagName('button')[0];
-    button.disabled = false;
 }
 
 document.addEventListener("DOMContentLoaded", function(){
