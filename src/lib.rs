@@ -34,30 +34,6 @@ pub fn main() -> Result<(), JsValue> {
     Ok(())
 }
 
-#[wasm_bindgen]
-pub fn enable_components() -> Result<(), JsValue> {
-    let nodes = get_document().query_selector_all("[data-ui-element=\"true\"]")?;
-    let mut index = 0;
-    loop {
-        if index >= nodes.length() {
-            break;
-        }
-        if let Some(node) = nodes.get(index) {
-            let element = node.dyn_into::<HtmlElement>()?;
-            let id = element.id();
-            if &id == "button" {
-                let element = element.dyn_into::<HtmlButtonElement>()?;
-                element.set_disabled(false);
-            } else {
-                let element = element.dyn_into::<HtmlInputElement>()?;
-                element.set_disabled(false);
-            }
-        };
-        index += 1;
-    }
-    Ok(())
-}
-
 fn init_button() -> Result<(), JsValue> {
     let closure = Closure::wrap(Box::new(move |_event: MouseEvent| {
         let document = get_document();
@@ -142,5 +118,29 @@ fn init_check_boxes() -> Result<(), JsValue> {
         input.set_checked(value);
     }
     closure.forget();
+    Ok(())
+}
+
+#[wasm_bindgen]
+pub fn enable_components() -> Result<(), JsValue> {
+    let nodes = get_document().query_selector_all("[data-ui-element=\"true\"]")?;
+    let mut index = 0;
+    loop {
+        if index >= nodes.length() {
+            break;
+        }
+        if let Some(node) = nodes.get(index) {
+            let element = node.dyn_into::<HtmlElement>()?;
+            let id = element.id();
+            if &id == "button" {
+                let element = element.dyn_into::<HtmlButtonElement>()?;
+                element.set_disabled(false);
+            } else {
+                let element = element.dyn_into::<HtmlInputElement>()?;
+                element.set_disabled(false);
+            }
+        };
+        index += 1;
+    }
     Ok(())
 }
